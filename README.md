@@ -35,6 +35,8 @@
 </tr>
 </table>
 
+For more visual results, go checkout our <a href="https://hongfz16.github.io/projects/EVA3D.html" target="_blank">project page</a> :open_book:
+
 <!-- This repository will contain the official implementation of _EVA3D: Compositional 3D Human Generation from 2D Image Collections_. -->
 Codes coming soon :beers:
 
