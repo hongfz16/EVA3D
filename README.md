@@ -13,7 +13,7 @@
     S-Lab, Nanyang Technological University&emsp; <sup>*</sup>corresponding author
 </div>
 
-<h3>TL;DR</h3>
+<!-- <h3>TL;DR</h3> -->
 <h4>EVA3D is a high-quality unconditional 3D human generative model that only requires 2D image collections for training.</h4>
 
 <table>
@@ -27,16 +27,16 @@
 </tr>
 <tr>
     <td align='center' width='14%'>Sample 1 RGB</td>
-    <td align='center' width='14%'>Sample 1 Geometry</td>
+    <td align='center' width='14%'>Sample 1 Geo</td>
     <td align='center' width='14%'>Sample 2 RGB</td>
-    <td align='center' width='14%'>Sample 2 Geometry</td>
+    <td align='center' width='14%'>Sample 2 Geo</td>
     <td align='center' width='19%'>Novel Pose Generation</td>
     <td align='center' width='19%'>Latent Space Interpolation</td>
 </tr>
 </table>
 
 <!-- This repository will contain the official implementation of _EVA3D: Compositional 3D Human Generation from 2D Image Collections_. -->
-Codes are coming soon :beers:
+Codes coming soon :beers:
 
 ---
 
