@@ -44,7 +44,7 @@ Codes coming soon :beers:
 
 <h4 align="center">
   <a href="https://hongfz16.github.io/projects/EVA3D.html" target='_blank'>[Project Page]</a> •
-  <a href="" target='_blank'>[arXiv]</a> •
+  <a href="https://arxiv.org/abs/2210.04888" target='_blank'>[arXiv]</a> •
   <a href="https://youtu.be/JNV0FJ0aDWM" target='_blank'>[Demo Video]</a>
 </h4>
 
@@ -53,7 +53,12 @@ Codes coming soon :beers:
 ## Citation
 If you find our work useful for your research, please consider citing the paper:
 ```
-TBA
+@article{EVA3D,
+  title={EVA3D: Compositional 3D Human Generation from 2D Image Collections},
+  author={Hong, Fangzhou and Chen, Zhaoxi and Lan, Yushi and Pan, Liang and Liu, Ziwei},
+  journal={arXiv preprint arXiv:2210.04888},
+  year={2022}
+}
 ```
 
 ## License
