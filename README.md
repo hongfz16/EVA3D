@@ -13,6 +13,10 @@
     S-Lab, Nanyang Technological University&emsp; <sup>*</sup>corresponding author
 </div>
 
+<div>
+    <strong>Accepted to ICLR 2023 as Spotlight</strong> :star_struck:
+</div>
+
 <!-- <h3>TL;DR</h3> -->
 <h4>EVA3D is a high-quality unconditional 3D human generative model that only requires 2D image collections for training.</h4>
 
@@ -38,7 +42,9 @@
 For more visual results, go checkout our <a href="https://hongfz16.github.io/projects/EVA3D.html" target="_blank">project page</a> :open_book:
 
 <!-- This repository will contain the official implementation of _EVA3D: Compositional 3D Human Generation from 2D Image Collections_. -->
-Codes coming soon :beers:
+Inference codes released :hugs:
+
+Training codes coming soon :beers:
 
 ---
 
@@ -50,15 +56,52 @@ Codes coming soon :beers:
 
 </div>
 
+## Updates
+[02/2023] Inference codes (512x256 generation on DeepFashion) are released.
+
+[01/2023] EVA3D is accepted to ICLR 2023 (Spotlight):partying_face:!
+
 ## Citation
 If you find our work useful for your research, please consider citing the paper:
 ```
-@article{EVA3D,
-  title={EVA3D: Compositional 3D Human Generation from 2D Image Collections},
-  author={Hong, Fangzhou and Chen, Zhaoxi and Lan, Yushi and Pan, Liang and Liu, Ziwei},
-  journal={arXiv preprint arXiv:2210.04888},
-  year={2022}
+@inproceedings{
+    hong2023evad,
+    title={{EVA}3D: Compositional 3D Human Generation from 2D Image Collections},
+    author={Fangzhou Hong and Zhaoxi Chen and Yushi LAN and Liang Pan and Ziwei Liu},
+    booktitle={International Conference on Learning Representations},
+    year={2023},
+    url={https://openreview.net/forum?id=g7U9jD_2CUr}
 }
+```
+
+## Requirements
+
+### Environments
+
+We recommend using anaconda to manage the python environments.
+
+```bash
+conda create --name eva3d python=3.8
+conda install pytorch==1.7.1 torchvision==0.8.2 torchaudio==0.7.2 cudatoolkit=10.1 -c pytorch
+conda install -c fvcore -c iopath -c conda-forge fvcore iopath
+conda install pytorch3d -c pytorch3d
+pip install -r requirements.txt
+```
+
+### Download Models
+
+The pretrain model and SMPL model are needed for inference.
+
+```bash
+python download_models.py
+```
+
+## Inference
+
+We provide a script for inference the model trained on DeepFashion with the resolution of 512x256.
+
+```bash
+sh scripts/demo_deepfashion_512x256.sh
 ```
 
 ## License
