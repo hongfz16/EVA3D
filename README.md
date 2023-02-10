@@ -51,7 +51,8 @@ Training codes coming soon :beers:
 <h4 align="center">
   <a href="https://hongfz16.github.io/projects/EVA3D.html" target='_blank'>[Project Page]</a> •
   <a href="https://arxiv.org/abs/2210.04888" target='_blank'>[arXiv]</a> •
-  <a href="https://youtu.be/JNV0FJ0aDWM" target='_blank'>[Demo Video]</a>
+  <a href="https://youtu.be/JNV0FJ0aDWM" target='_blank'>[Demo Video]</a> •
+  <a href="https://colab.research.google.com/drive/1k6-Sc_EsIT292hNgu-7haC5ghggImQ7f?usp=sharing" target='_blank'>[Colab Demo]</a>
 </h4>
 
 </div>

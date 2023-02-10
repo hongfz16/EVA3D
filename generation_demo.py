@@ -34,9 +34,9 @@ from pytorch3d.renderer import (
     SoftSilhouetteShader, HardPhongShader, PointLights, TexturesVertex,
 )
 
-torch.random.manual_seed(10086)
-import random
-random.seed(10086)
+# torch.random.manual_seed(10086)
+# import random
+# random.seed(10086)
 
 panning_angle = np.pi / 3
 
