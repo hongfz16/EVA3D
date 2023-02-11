@@ -17,14 +17,15 @@
     <strong>Accepted to ICLR 2023 as Spotlight</strong> :star_struck:
 </div>
 
+<div>
 <a target="_blank" href="https://colab.research.google.com/github/hongfz16/EVA3D/blob/main/notebook/EVA3D_Demo.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 [![Hugging Face](https://img.shields.io/badge/Demo-%F0%9F%A4%97%20Hugging%20Face-blue)](https://huggingface.co/spaces/hongfz16/EVA3D)
 <a href="https://hits.seeyoufarm.com"><img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fhongfz16%2FEVA3D&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false"/></a>
+</div>
 
-<!-- <h3>TL;DR</h3> -->
-<h4>EVA3D is a high-quality unconditional 3D human generative model that only requires 2D image collections for training.</h4>
+<strong>EVA3D is a high-quality unconditional 3D human generative model that only requires 2D image collections for training.</strong>
 
 <table>
 <tr>
