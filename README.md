@@ -20,6 +20,7 @@
 <a target="_blank" href="https://colab.research.google.com/github/hongfz16/EVA3D/blob/main/notebook/EVA3D_Demo.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
+[![Hugging Face](https://img.shields.io/badge/Demo-%F0%9F%A4%97%20Hugging%20Face-blue)](https://huggingface.co/spaces/hongfz16/EVA3D)
 <a href="https://hits.seeyoufarm.com"><img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fhongfz16%2FEVA3D&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false"/></a>
 
 <!-- <h3>TL;DR</h3> -->
@@ -57,13 +58,14 @@ Training codes coming soon :beers:
   <a href="https://hongfz16.github.io/projects/EVA3D.html" target='_blank'>[Project Page]</a> •
   <a href="https://arxiv.org/abs/2210.04888" target='_blank'>[arXiv]</a> •
   <a href="https://youtu.be/JNV0FJ0aDWM" target='_blank'>[Demo Video]</a> •
-  <a href="https://colab.research.google.com/drive/1k6-Sc_EsIT292hNgu-7haC5ghggImQ7f?usp=sharing" target='_blank'>[Colab Demo]</a>
+  <a href="https://colab.research.google.com/drive/1k6-Sc_EsIT292hNgu-7haC5ghggImQ7f?usp=sharing" target='_blank'>[Colab Demo]</a> •
+  <a href="" target='_blank'>[Hugging Face :hugs:]</a>
 </h4>
 
 </div>
 
 ## Updates
-[02/2023] Inference codes (512x256 generation on DeepFashion) are released.
+[02/2023] Inference codes (512x256 generation on DeepFashion) are released, including colab and huggingface demos.
 
 [01/2023] EVA3D is accepted to ICLR 2023 (Spotlight):partying_face:!
 
@@ -117,3 +119,5 @@ Distributed under the S-Lab License. See `LICENSE` for more information.
 ## Acknowledgements
 
 This study is supported by NTU NAP, MOE AcRF Tier 2 (T2EP20221-0033), and under the RIE2020 Industry Alignment Fund – Industry Collaboration Projects (IAF-ICP) Funding Initiative, as well as cash and in-kind contribution from the industry partner(s).
+
+This project is built on source codes shared by [StyleSDF](https://github.com/royorel/StyleSDF).
