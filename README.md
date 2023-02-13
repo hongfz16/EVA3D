@@ -135,6 +135,10 @@ python download_datasets.py
 bash scripts/train_deepfashion_512x256.sh
 ```
 
+Intermediate results will be saved under `checkpoint/train_deepfashion_512x256/volume_renderer/samples` every 100 iterations. The first line presents inference images from EMA generator. The second line present one inference sample of the training generator and one sample from the training dataset.
+
+To inference the trained models, please refer to the **Inference** section.
+
 Support for more datasets coming soon...
 
 ## :newspaper_roll: License
