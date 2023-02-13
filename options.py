@@ -42,7 +42,6 @@ class BaseOptions():
         training.add_argument("--path_regularize", type=float, default=2, help="weight of the path length regularization")
         training.add_argument("--path_batch_shrink", type=int, default=2, help="batch size reducing factor for the path length regularization (reduce memory consumption)")
         training.add_argument("--wandb", action="store_true", help="use weights and biases logging")
-        training.add_argument("--no_sphere_init", action="store_true", help="do not initialize the volume renderer with a sphere SDF")
         training.add_argument("--small_aug", action='store_true')
         training.add_argument("--adjust_gamma", action='store_true', default=False)
         training.add_argument("--gamma_lb", type=float, default=20)

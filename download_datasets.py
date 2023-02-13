@@ -7,34 +7,22 @@ import requests
 from tqdm import tqdm
 from pdb import set_trace as st
 
-eva3d_deepfashion_model = dict(file_url='https://drive.google.com/uc?id=1SYPjxnHz3XPRhTarx_Lw8SG_iz16QUMU',
-                            alt_url='', file_size=160393221, file_md5='d0fae86edf76c52e94223bd3f39b2157',
-                            file_path='checkpoint/512x256_deepfashion/volume_renderer/models_0420000.pt',)
+deepfashion_info = dict(file_url='https://api.onedrive.com/v1.0/shares/u!aHR0cHM6Ly8xZHJ2Lm1zL3UvcyFBakxwRmctZjQ4bGpnYzFXU1dsMFhwWWZzWDBCTFE_ZT1vM3RWdmI/root/content',
+                        alt_url='', file_size=4499345395, file_md5='cb3122bbf766ccc1cb68f6b61060c096',
+                        file_path='datasets/DeepFashion.zip',)
 
-smpl_model = dict(file_url='https://drive.google.com/uc?id=15XKYibakFcDgs_wEtLqS5dJYHck0FIv4',
-                            alt_url='', file_size=39001280, file_md5='65dc7f162f3ef21a38637663c57e14a7',
-                            file_path='smpl_models/smpl/SMPL_NEUTRAL.pkl',)
-
-def download_pretrained_models():
-    print('Downloading EVA3D model pretrained on DeepFashion.')
+def download_deepfashion():
+    print('Downloading DeepFashion Datasets...')
     with requests.Session() as session:
         try:
-            download_file(session, eva3d_deepfashion_model)
+            download_file(session, deepfashion_info)
         except:
             print('Google Drive download failed.\n' \
                   'Trying do download from alternate server')
-            download_file(session, eva3d_deepfashion_model, use_alt_url=True)
+            download_file(session, deepfashion_info, use_alt_url=True)
+    os.system('unzip datasets/DeepFashion.zip -d datasets')
+    os.system('rm datasets/DeepFashion.zip')
 
-def download_smpl_models():
-    print('Downloading SMPL model.')
-    with requests.Session() as session:
-        try:
-            download_file(session, smpl_model)
-        except:
-            print('Google Drive download failed.\n' \
-                  'Trying do download from alternate server')
-            download_file(session, smpl_model, use_alt_url=True)
-    
 
 def download_file(session, file_spec, use_alt_url=False, chunk_size=128, num_attempts=10):
     file_path = file_spec['file_path']
@@ -99,5 +87,4 @@ def download_file(session, file_spec, use_alt_url=False, chunk_size=128, num_att
             pass
 
 if __name__ == "__main__":
-    download_pretrained_models()
-    download_smpl_models()
+    download_deepfashion()

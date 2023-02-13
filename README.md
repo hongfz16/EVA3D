@@ -14,7 +14,7 @@
 </div>
 
 <div>
-    <strong>Accepted to ICLR 2023 as Spotlight</strong> :star_struck:
+    :star_struck: <strong>Accepted to ICLR 2023 as Spotlight</strong>
 </div>
 
 <div>
@@ -48,12 +48,10 @@
 </tr>
 </table>
 
-For more visual results, go checkout our <a href="https://hongfz16.github.io/projects/EVA3D.html" target="_blank">project page</a> :open_book:
+:open_book: For more visual results, go checkout our <a href="https://hongfz16.github.io/projects/EVA3D.html" target="_blank">project page</a>
 
 <!-- This repository will contain the official implementation of _EVA3D: Compositional 3D Human Generation from 2D Image Collections_. -->
-Inference codes released :hugs:
-
-Training codes coming soon :beers:
+:beers: Training and Inference codes released
 
 ---
 
@@ -67,12 +65,14 @@ Training codes coming soon :beers:
 
 </div>
 
-## Updates
+## :mega: Updates
+[02/2023] Training codes for DeepFashion with our processed dataset are released.
+
 [02/2023] Inference codes (512x256 generation on DeepFashion) are released, including colab and huggingface demos.
 
 [01/2023] EVA3D is accepted to ICLR 2023 (Spotlight):partying_face:!
 
-## Citation
+## :love_you_gesture: Citation
 If you find our work useful for your research, please consider citing the paper:
 ```
 @inproceedings{
@@ -85,10 +85,11 @@ If you find our work useful for your research, please consider citing the paper:
 }
 ```
 
-## Requirements
+## :desktop_computer: Requirements
 
-### Environments
-
+NVIDIA GPUs are required for this project.
+We have test the inference codes on NVIDIA RTX2080Ti, NVIDIA V100, NVIDIA A100, NVIDIA T4.
+The training codes have been tested on NVIDIA V100, NVIDIA A100.
 We recommend using anaconda to manage the python environments.
 
 ```bash
@@ -99,6 +100,8 @@ conda install pytorch3d -c pytorch3d
 pip install -r requirements.txt
 ```
 
+## :running_woman: Inference
+
 ### Download Models
 
 The pretrain model and SMPL model are needed for inference.
@@ -107,19 +110,38 @@ The pretrain model and SMPL model are needed for inference.
 python download_models.py
 ```
 
-## Inference
+### Commands
 
 We provide a script for inference the model trained on DeepFashion with the resolution of 512x256.
 
 ```bash
-sh scripts/demo_deepfashion_512x256.sh
+bash scripts/demo_deepfashion_512x256.sh
 ```
 
-## License
+## :train: Training
+
+### DeepFashion
+
+#### Download SMPL Models & Processed Datasets
+
+```bash
+python download_models.py
+python download_datasets.py
+```
+
+#### Commands
+
+```bash
+bash scripts/train_deepfashion_512x256.sh
+```
+
+Support for more dataset comeing soon...
+
+## :newspaper_roll: License
 
 Distributed under the S-Lab License. See `LICENSE` for more information.
 
-## Acknowledgements
+## :raised_hands: Acknowledgements
 
 This study is supported by NTU NAP, MOE AcRF Tier 2 (T2EP20221-0033), and under the RIE2020 Industry Alignment Fund – Industry Collaboration Projects (IAF-ICP) Funding Initiative, as well as cash and in-kind contribution from the industry partner(s).
 
