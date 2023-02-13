@@ -135,7 +135,7 @@ python download_datasets.py
 bash scripts/train_deepfashion_512x256.sh
 ```
 
-Support for more dataset comeing soon...
+Support for more datasets coming soon...
 
 ## :newspaper_roll: License
 
