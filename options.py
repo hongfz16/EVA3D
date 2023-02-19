@@ -91,6 +91,7 @@ class BaseOptions():
         rendering.add_argument("--no_sdf", action='store_true', help='By default, the raw MLP outputs represent an underline signed distance field (SDF). When true, the MLP outputs represent the traditional NeRF density field.')
         rendering.add_argument("--no_z_normalize", action='store_true', help='By default, the model normalizes input coordinates such that the z coordinate is in [-1,1]. When true that feature is disabled.')
         rendering.add_argument("--static_viewdirs", action='store_true', help='when true, use static viewing direction input to the MLP')
+        rendering.add_argument("--is_aist", action='store_true')
         # Ray intergration options
         rendering.add_argument("--N_samples", type=int, default=24, help='number of samples per ray')
         rendering.add_argument("--no_offset_sampling", action='store_true', help='when true, use random stratified sampling when rendering the volume, otherwise offset sampling is used. (See Equation (3) in Sec. 3.2 of the paper)')

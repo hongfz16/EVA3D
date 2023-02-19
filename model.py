@@ -11,6 +11,7 @@ from op import FusedLeakyReLU, fused_leaky_relu, upfirdn2d
 from pdb import set_trace as st
 
 from eva3d_deepfashion import VoxelHuman as EVA3D_DEEPFASHION_MODEL
+from eva3d_aist import VoxelHuman as EVA3D_AIST_MODEL
 
 # import neural_renderer as nr
 from smpl_utils import batch_rodrigues
@@ -869,7 +870,12 @@ class VoxelHumanGenerator(nn.Module):
             'gender': model_opt.smpl_gender,
             'num_betas': 10
         }
-        VoxHuman_Class = EVA3D_DEEPFASHION_MODEL
+        if model_opt.voxhuman_name == 'eva3d_deepfashion':
+            VoxHuman_Class = EVA3D_DEEPFASHION_MODEL
+        elif model_opt.voxhuman_name == 'eva3d_aist':
+            VoxHuman_Class = EVA3D_AIST_MODEL
+        else:
+            raise NotImplementedError
         self.renderer = VoxHuman_Class(renderer_opt, smpl_cfgs, out_im_res=tuple(model_opt.renderer_spatial_output_dim), style_dim=self.style_dim)
 
         if self.full_pipeline:

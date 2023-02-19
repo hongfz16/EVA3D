@@ -66,6 +66,8 @@
 </div>
 
 ## :mega: Updates
+[02/2023] Inference codes for SHHQ, UBCFashion and AIST are released.
+
 [02/2023] Training codes for DeepFashion with our processed dataset are released.
 
 [02/2023] Inference codes (512x256 generation on DeepFashion) are released, including colab and huggingface demos.
@@ -112,10 +114,13 @@ python download_models.py
 
 ### Commands
 
-We provide a script for inference the model trained on DeepFashion with the resolution of 512x256.
+We provide a script for inference the model trained on DeepFashion, SHHQ, UBCFashion, AIST.
 
 ```bash
 bash scripts/demo_deepfashion_512x256.sh
+bash scripts/demo_shhq_512x256.sh
+bash scripts/demo_ubcfashion_512x256.sh
+bash scripts/demo_aist_256x256.sh
 ```
 
 ## :train: Training

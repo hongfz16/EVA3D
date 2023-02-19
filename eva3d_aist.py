@@ -1,4 +1,5 @@
 import os
+import math
 import pickle
 import torch
 import torch.nn as nn
@@ -7,7 +8,7 @@ import torch.autograd as autograd
 import numpy as np
 from functools import partial
 from pdb import set_trace as st
-from smplx.lbs import transform_mat, blend_shapes
+from smplx.lbs import transform_mat, blend_shapes, vertices2joints
 from pytorch3d.ops.knn import knn_gather, knn_points
 
 from volume_renderer import SirenGenerator
@@ -57,7 +58,7 @@ class VoxelSDFRenderer(nn.Module):
         self.input_ch_views = opt.input_ch_views
         self.feature_out_size = opt.width
 
-        # print(opt.depth, opt.width)
+        print(opt.depth, opt.width)
 
         # set Siren Generator model
         self.network = SirenGenerator(D=opt.depth, W=opt.width, style_dim=style_dim, input_ch=self.input_ch,
@@ -314,10 +315,7 @@ class VoxelHuman(nn.Module):
 
             if j == 15:
                 new_opt = opt.copy()
-                if opt.is_aist:
-                    new_opt.depth = 6
-                else:
-                    new_opt.depth = 8
+                new_opt.depth = 6
                 new_opt.width = 128
                 cur_vox = VoxelSDFRenderer(
                     new_opt, xyz_min, xyz_max, style_dim, mode=mode
@@ -338,10 +336,7 @@ class VoxelHuman(nn.Module):
                 )
             else:
                 new_opt = opt.copy()
-                if opt.is_aist:
-                    new_opt.depth = 3
-                else:
-                    new_opt.depth = 4
+                new_opt.depth = 3
                 new_opt.width = 128
                 cur_vox = VoxelSDFRenderer(
                     new_opt, xyz_min, xyz_max, style_dim, mode=mode
@@ -360,9 +355,9 @@ class VoxelHuman(nn.Module):
                 self.voxind2voxlist[1] = len(self.vox_list) - 1
                 self.voxind2voxlist[2] = len(self.vox_list) - 1
 
-    def compute_actual_bbox(self, beta):
+    def compute_actual_bbox(self, beta, scale):
         actual_vox_bbox = []
-        init_J = get_J(beta.reshape(1, 10), self.smpl_model)
+        init_J = get_J(beta.reshape(1, 10), self.smpl_model) * scale.item()
         for j in range(self.num_joints):
             pj = self.parents[j]
             j_coor = init_J[j]
@@ -538,13 +533,6 @@ class VoxelHuman(nn.Module):
 
         return rays_o_local, rays_d_local
 
-    def forward_transform_bbox(self, i, transforms_mat, xyz_min, xyz_max):
-        # xyz_min = self.vox_list[i].xyz_min
-        # xyz_max = self.vox_list[i].xyz_max
-        new_xyz_min = torch.matmul(transforms_mat[:3, :3], xyz_min.reshape(3, 1))[..., 0] + transforms_mat[:3, -1]
-        new_xyz_max = torch.matmul(transforms_mat[:3, :3], xyz_max.reshape(3, 1))[..., 0] + transforms_mat[:3, -1]
-        return new_xyz_min.detach().cpu().numpy(), new_xyz_max.detach().cpu().numpy()
-
     def sample_ray_bbox_intersect(self, rays_o, rays_d, xyz_min, xyz_max):
         _rays_d = rays_d / rays_d.norm(dim=-1, keepdim=True)
         vec = torch.where(_rays_d==0, torch.full_like(_rays_d, 1e-6), _rays_d)
@@ -557,12 +545,18 @@ class VoxelHuman(nn.Module):
         t_max[mask_outbbox] = -10086
         return t_min.view(-1), t_max.view(-1), mask_outbbox.view(-1)
 
-    def sample_ray(self, beta, theta, trans, rays_o, rays_d, K=3):
+    def sample_ray(self, _beta, theta, _trans, rays_o, rays_d, K=3):
         _theta = theta.reshape(1, 24, 3, 3)
-        so = self.smpl_model(betas = beta.reshape(1, 10), body_pose = _theta[:, 1:], global_orient = _theta[:, 0].view(1, 1, 3, 3))
+        trans = _trans.reshape(1, 3).clone() / 100.0
+        beta = _beta.reshape(1, 1).clone() / 100.0
+        zero_beta = torch.zeros(1, 10).to(beta.device)
+        so = self.smpl_model(betas = zero_beta, body_pose = _theta[:, 1:], global_orient = _theta[:, 0].view(1, 1, 3, 3))
         smpl_v = so['vertices'].clone().reshape(-1, 3)
+        smpl_v *= beta[0, 0]
         del so
-        init_J = get_J(beta.reshape(1, 10), self.smpl_model)
+        init_J = get_J(zero_beta, self.smpl_model)
+        init_J = init_J * beta[0, 0].detach().cpu().numpy()
+
         # first sample ray pts for each voxel
         rays_pts_local_list = []
         rays_d_pts_local_list = []
@@ -572,9 +566,7 @@ class VoxelHuman(nn.Module):
         _, rel_transforms = self.batch_rigid_transform(theta, init_J)
         # inv_rel_transforms = torch.inverse(rel_transforms)
 
-        shape_blend_shapes = blend_shapes(beta.reshape(1, 10), self.smpl_model.shapedirs).view(-1, 3)
-
-        
+        shape_blend_shapes = ((beta[0, 0] - 1) * self.smpl_model.v_template).view(-1, 3)
         ident = torch.eye(3).cuda()
         pose_feature = (theta[:, 1:].view(1, -1, 3, 3) - ident).view(1, -1)
         pose_blend_shapes = torch.matmul(pose_feature, self.smpl_model.posedirs).view(-1, 3)
@@ -586,12 +578,11 @@ class VoxelHuman(nn.Module):
         # shape_transforms[:, ...] = torch.eye(4)
         # shape_transforms[:, :3, -1] = all_blend_shapes
 
-        actual_vox_bbox = self.compute_actual_bbox(beta)
+        actual_vox_bbox = self.compute_actual_bbox(zero_beta, beta[0, 0])
 
         t_min_list = []
         t_max_list = []
         mask_outbbox_list = []
-        bbox_transformation_list = []
 
         for i, cur_vox in enumerate(self.vox_list):
             vox_i = self.vox_index[i]
@@ -603,7 +594,6 @@ class VoxelHuman(nn.Module):
                 cur_transforms_mat = rel_transforms[0, self.parents[vox_i]]
             
             rays_o_local, rays_d_local = self.transform_to_vox_local(rays_o, rays_d, cur_transforms_mat, trans)
-            bbox_transformation_list.append(cur_transforms_mat)
 
             cur_xyz_min, cur_xyz_max = actual_vox_bbox[i]
             cur_t_min, cur_t_max, cur_mask_outbbox = self.sample_ray_bbox_intersect(
@@ -728,15 +718,21 @@ class VoxelHuman(nn.Module):
 
 
         return rays_pts_local_list, rays_pts_global, mask_outbbox_list, valid_mask_outbbox_list, \
-        mask_outbbox, forward_skinning_transformation_list, z_vals, rays_d_pts_local_list, bbox_transformation_list, smpl_v, actual_vox_bbox
+               mask_outbbox, forward_skinning_transformation_list, z_vals, rays_d_pts_local_list
 
-    def get_rays(self, focal, c2w):
-        dirs = torch.stack([(self.i - self.out_im_res[1] * .5) / focal[0],
-                            (self.j - self.out_im_res[0] * .5) / focal[0],
-                            torch.ones_like(self.i).expand(1,self.out_im_res[0], self.out_im_res[1])], -1).repeat(focal.shape[0], 1, 1, 1)
+    def get_rays(self, intrinsic, w2c):
+        # dirs = torch.stack([(self.i - self.out_im_res[1] * .5) / focal[0],
+        #                     (self.j - self.out_im_res[0] * .5) / focal[0],
+        #                     torch.ones_like(self.i).expand(1,self.out_im_res[0], self.out_im_res[1])], -1).repeat(focal.shape[0], 1, 1, 1)
+        dirs = torch.stack([(self.i - intrinsic[0, 0, 2]) / intrinsic[0, 0, 0],
+                            (self.j - intrinsic[0, 1, 2]) / intrinsic[0, 1, 1],
+                            torch.ones_like(self.i).expand(1,self.out_im_res[0], self.out_im_res[1])], -1).repeat(intrinsic.shape[0], 1, 1, 1)
+
+        c2w = torch.inverse(w2c)
 
         # Rotate ray directions from camera frame to the world frame
-        rays_d = torch.sum(dirs[..., None, :] * c2w[:,None,None,:3,:3], -1)  # dot product, equals to: [c2w.dot(dir) for dir in dirs]
+        R = c2w[:,None,None,:3,:3]
+        rays_d = torch.sum(dirs[..., None, :] * R, -1)  # dot product, equals to: [c2w.dot(dir) for dir in dirs]
 
         # Translate camera frame's origin to the world frame. It is the origin of all rays.
         rays_o = c2w[:,None,None,:3,-1].expand(rays_d.shape)
@@ -786,7 +782,6 @@ class VoxelHuman(nn.Module):
                         self.sdf_voxels, query_pts,
                         padding_mode = 'border', align_corners = True
                     ).reshape(-1)
-
                     window_alpha = 4; window_beta = 8
                     mask_cur_pts = (mask_cur_pts - (cur_vox.xyz_min + cur_vox.xyz_max) / 2.0) / (cur_vox.xyz_max - cur_vox.xyz_min)
                     weights = torch.exp(-window_alpha * ((mask_cur_pts * 2) ** window_beta).sum(-1))
@@ -812,8 +807,8 @@ class VoxelHuman(nn.Module):
             sdf[mask] = 1
         return sdf.view(resolution, resolution, resolution)
 
-    def marching_cube_posed(self, styles, beta, theta, resolution=128, size=1, w_space=False, gamma_list=None, beta_list=None):
-        # assert self.opt.input_ch_views == 3
+    def marching_cube_posed(self, styles, _beta, theta, resolution=128, size=1):
+        assert self.opt.input_ch_views == 3
         x, y, z = torch.meshgrid(torch.linspace(-size, size, resolution),
                                  torch.linspace(-size, size, resolution),
                                  torch.linspace(-size, size, resolution))
@@ -831,13 +826,19 @@ class VoxelHuman(nn.Module):
 
         theta = batch_rodrigues(theta.reshape(-1, 3)).reshape(1, 24, 3, 3)
         _theta = theta.reshape(1, 24, 3, 3)
-        so = self.smpl_model(betas = beta.reshape(1, 10), body_pose = _theta[:, 1:], global_orient = _theta[:, 0].view(1, 1, 3, 3))
+        beta = _beta.reshape(1, 1).clone() / 100.0
+        zero_beta = torch.zeros(1, 10).to(beta.device)
+        so = self.smpl_model(betas = zero_beta.reshape(1, 10), body_pose = _theta[:, 1:], global_orient = _theta[:, 0].view(1, 1, 3, 3))
         smpl_v = so['vertices'].clone().reshape(-1, 3)
+        smpl_v *= beta[0, 0]
         del so
-        init_J = get_J(beta.reshape(1, 10), self.smpl_model)
+        init_J = get_J(zero_beta.reshape(1, 10), self.smpl_model)
+        init_J = init_J * beta[0, 0].detach().cpu().numpy()
         _, rel_transforms = self.batch_rigid_transform(theta, init_J)
-        actual_vox_bbox = self.compute_actual_bbox(beta)
-        shape_blend_shapes = blend_shapes(beta.reshape(1, 10), self.smpl_model.shapedirs).view(-1, 3)
+        # actual_vox_bbox = self.compute_actual_bbox(zero_beta)
+        actual_vox_bbox = self.compute_actual_bbox(zero_beta, beta[0, 0])
+        # shape_blend_shapes = blend_shapes(zero_beta.reshape(1, 10), self.smpl_model.shapedirs).view(-1, 3)
+        shape_blend_shapes = ((beta[0, 0] - 1) * self.smpl_model.v_template).view(-1, 3)
         ident = torch.eye(3).cuda()
         pose_feature = (theta[:, 1:].view(1, -1, 3, 3) - ident).view(1, -1)
         pose_blend_shapes = torch.matmul(pose_feature, self.smpl_model.posedirs).view(-1, 3)
@@ -911,22 +912,12 @@ class VoxelHuman(nn.Module):
                     weights = torch.exp(-window_alpha * ((new_mask_rays_pts_local * 2) ** window_beta).sum(-1))
                     fake_d = torch.zeros_like(new_mask_rays_pts_local)
                     fake_d[..., 0] = 1
-                    if self.opt.input_ch_views == 3:
-                        cur_input = torch.cat([
-                            new_mask_rays_pts_local, fake_d
-                        ], -1).unsqueeze(0)
-                    else:
-                        cur_input = new_mask_rays_pts_local.unsqueeze(0)
-                    if w_space:
-                        assert gamma_list is not None
-                        assert beta_list is not None
-                        new_mask_results = (cur_vox.network.forward_with_gamma_beta(
-                            cur_input, gamma_list[i], beta_list[i]
-                        ).view(-1, 4)[..., -1] + template_sdf) * weights.view(-1)
-                    else:
-                        new_mask_results = (cur_vox.network(
-                            cur_input, styles=styles
-                        ).view(-1, 4)[..., -1] + template_sdf) * weights.view(-1)
+                    cur_input = torch.cat([
+                        new_mask_rays_pts_local, fake_d
+                    ], -1).unsqueeze(0)
+                    new_mask_results = (cur_vox.network(
+                        cur_input, styles=styles
+                    ).view(-1, 4)[..., -1] + template_sdf) * weights.view(-1)
                     tmp_raw = torch.zeros_like(cur_sdf[cur_pts_ind])
                     tmp_raw[cur_new_mask.squeeze(0)] = new_mask_results
                     tmp_counter = torch.zeros_like(cur_counter[cur_pts_ind])
@@ -946,20 +937,19 @@ class VoxelHuman(nn.Module):
             sdf[mask] = 1
         return sdf.view(resolution, resolution, resolution)
 
-    def forward(self, cam_poses, focals, beta, theta, trans, styles=None, return_eikonal=False, no_white_bg=False, fix_viewdir=False, w_space=False, gamma_list=None, beta_list=None):
+    def forward(self, cam_poses, intrinsic, beta, theta, trans, styles=None, return_eikonal=False, no_white_bg=False, l_ratio=0, fix_viewdir=False):
         batch_size = cam_poses.shape[0]
         beta = beta[:1]
         theta = theta[:1]
         trans = trans[:1]
         rays_num = self.out_im_res[0] * self.out_im_res[1]
-        rays_o, rays_d, viewdirs = self.get_rays(focals, cam_poses)
+        rays_o, rays_d, viewdirs = self.get_rays(intrinsic, cam_poses)
         rays_o = rays_o.reshape(batch_size, -1, 3)
         rays_d = rays_d.reshape(batch_size, -1, 3)
         viewdirs = viewdirs.reshape(-1, 3)
         theta_rodrigues = batch_rodrigues(theta.reshape(-1, 3)).reshape(1, 24, 3, 3)
         rays_pts_local_list, rays_pts_global, mask_outbbox_list, valid_mask_outbbox_list, \
-        mask_outbbox, forward_skinning_T_list, z_vals, rays_d_pts_local_list, \
-        bbox_transformation_list, smpl_v, actual_vox_bbox = \
+        mask_outbbox, forward_skinning_T_list, z_vals, rays_d_pts_local_list = \
             self.sample_ray(
                 beta, theta_rodrigues, trans, rays_o[0], rays_d[0]
             )
@@ -968,6 +958,19 @@ class VoxelHuman(nn.Module):
         rays_d = rays_d.reshape(-1, 3)
 
         valid_rays_num = rays_pts_global.shape[0]
+
+        H, W = self.out_im_res
+        if valid_rays_num == 0 or valid_rays_num/(H*W) > 10086.0:
+            rgb_map = torch.zeros(batch_size, H, W, 3).to(rays_o.device)
+            if self.opt.white_bg and not no_white_bg:
+                rgb_map += 1
+            rgb_map = -1 + 2 * rgb_map
+            rgb_map.requires_grad = True
+            sdf = torch.zeros(1).to(rays_o.device)
+            mask = torch.zeros(batch_size, H, W).to(rays_o.device)
+            xyz = torch.zeros(batch_size, H, W, 3).to(rays_o.device)
+            cat_eikonal_term = torch.zeros(1, 3).to(rays_o.device)
+            return rgb_map, rgb_map, [sdf], mask, xyz, cat_eikonal_term
 
         rays_pts_local_list = [
             data.repeat(batch_size, 1, 1) for data in rays_pts_local_list
@@ -999,7 +1002,6 @@ class VoxelHuman(nn.Module):
 
         
         raw = torch.zeros_like(rays_pts_global[..., 0]).unsqueeze(-1).repeat(1, 1, 4)
-        raw_template = torch.zeros_like(rays_pts_global[..., 0]).unsqueeze(-1).repeat(1, 1, 4)
         normal = torch.zeros_like(rays_pts_global[..., 0]).unsqueeze(-1).repeat(1, 1, 3)
         counter = torch.zeros_like(rays_pts_global[..., 0]).unsqueeze(-1)
 
@@ -1019,9 +1021,10 @@ class VoxelHuman(nn.Module):
                 cur_rays_d = torch.zeros_like(cur_rays_d)
                 cur_rays_d[..., -1] = -1
             tmp_raw = torch.zeros_like(raw[cur_mask]).view(-1, 4)
-            tmp_raw_template = torch.zeros_like(raw[cur_mask]).view(-1, 4)
             tmp_counter = torch.zeros_like(raw[cur_mask][..., 0]).view(-1)
             #################################################
+
+
 
             template_sdf = torch.nn.functional.grid_sample(
                 self.sdf_voxels, cur_xyz.reshape(1, 1, 1, -1, 3) / 1.3,
@@ -1039,30 +1042,20 @@ class VoxelHuman(nn.Module):
                     cur_rays_d.view(batch_size, -1, 3)
                 ], -1)
             elif self.opt.input_ch_views == 0:
-                # raise NotImplementedError
-                cur_input = cur_xyz.view(batch_size, -1, 3)
+                raise NotImplementedError
             else:
                 raise NotImplementedError
             
-            if w_space:
-                assert gamma_list is not None
-                assert beta_list is not None
-                tmp_output = self.vox_list[i].network.forward_with_gamma_beta(
-                    cur_input, gamma_list[i], beta_list[i]
-                ).view(-1, 4)
-            else:
-                tmp_output = self.vox_list[i].network(
-                    cur_input, styles=styles
-                ).view(-1, 4)
+            tmp_output = self.vox_list[i].network(
+                cur_input, styles=styles
+            ).view(-1, 4)
             actual_sdf_list.append(tmp_output[:, -1:].view(-1).clone())
             tmp_output[:, -1:] = tmp_output[:, -1:] + template_sdf
 
             tmp_raw[cur_new_mask] = tmp_output * weights.view(-1, 1)
-            tmp_raw_template[cur_new_mask] = template_sdf * weights.view(-1, 1)
             tmp_counter[cur_new_mask] += weights.view(-1)
 
             raw[cur_mask] += tmp_raw.view(-1, self.N_samples, 4)
-            raw_template[cur_mask] += tmp_raw_template.view(-1, self.N_samples, 4)
             counter[cur_mask] += tmp_counter.view(-1, self.N_samples, 1)
 
 
@@ -1084,42 +1077,24 @@ class VoxelHuman(nn.Module):
         sdf = raw[..., -1]
         sdf[counter.squeeze(-1) == 0] = 1
         raw[..., -1] = sdf
-        
-        sdf_template = raw_template[..., -1]
-        sdf_template[counter.squeeze(-1) == 0] = 1
-        raw_template[..., -1] = sdf_template
-
         counter[torch.isclose(counter, torch.zeros_like(counter).cuda())] = 1
-        
         raw = raw / counter
-
-        raw_template = raw_template / counter
-
         normal = normal / counter
 
         # Render All
         if self.with_sdf:
             sigma = self.sdf_activation(-raw[..., -1].view(batch_size, valid_rays_num, -1))
             sigma = 1 - torch.exp(-sigma * dists)
-            sigma_template = self.sdf_activation(-raw_template[..., -1].view(batch_size, valid_rays_num, -1))
-            sigma_template = 1 - torch.exp(-sigma_template * dists)
         else:
             raise NotImplementedError
 
         visibility = torch.cumprod(torch.cat([torch.ones_like(torch.index_select(sigma, 2, self.zero_idx)), 1.-sigma + 1e-10], 2), 2)
         visibility = visibility[...,:-1]
         _weights = sigma * visibility
-
-        visibility_template = torch.cumprod(torch.cat([torch.ones_like(torch.index_select(sigma_template, 2, self.zero_idx)), 1.-sigma_template + 1e-10], 2), 2)
-        visibility_template = visibility_template[...,:-1]
-        _weights_template = sigma_template * visibility_template
-
         _rgb_map = torch.sum(_weights.unsqueeze(-1) * torch.sigmoid(raw[..., :3].view(batch_size, valid_rays_num, -1, 3)), 2)
         _xyz_map = torch.sum(_weights.unsqueeze(-1) * rays_pts_global.view(batch_size, valid_rays_num, -1, 3), 2)
         _depth_map = torch.sum(_weights * z_vals.view(batch_size, valid_rays_num, -1), -1)
-        _depth_map_template = torch.sum(_weights_template * z_vals.view(batch_size, valid_rays_num, -1), -1)
         _weights_map = _weights.sum(dim=-1, keepdim=True)
-        _weights_map_template = _weights_template.sum(dim=-1, keepdim=True)
             
         if return_eikonal:
             normal = torch.sum(_weights.unsqueeze(-1) * normal.view(batch_size, valid_rays_num, -1, 3), 2)
@@ -1148,18 +1123,10 @@ class VoxelHuman(nn.Module):
         depth_map = torch.zeros(batch_size * H * W, 1).to(_depth_map.device) + _depth_map.max()
         depth_map[~mask_outbbox] = _depth_map.view(-1, 1)
         depth = depth_map.view(batch_size, H, W)
-        
-        depth_map_template = torch.zeros(batch_size * H * W, 1).to(_depth_map_template.device) + _depth_map_template.max()
-        depth_map_template[~mask_outbbox] = _depth_map_template.view(-1, 1)
-        depth_template = depth_map_template.view(batch_size, H, W)
 
         weights_map = torch.zeros(batch_size * H * W, 1).to(_weights_map.device)
         weights_map[~mask_outbbox] = _weights_map.view(-1, 1)
         mask = weights_map.view(batch_size, H, W)
-
-        weights_map_template = torch.zeros(batch_size * H * W, 1).to(_weights_map_template.device)
-        weights_map_template[~mask_outbbox] = _weights_map_template.view(-1, 1)
-        mask_template = weights_map_template.view(batch_size, H, W)
 
         if return_eikonal:
             normal_map = torch.zeros(batch_size * H * W, 3).to(normal.device)
@@ -1174,4 +1141,4 @@ class VoxelHuman(nn.Module):
         rgb_map = -1 + 2 * rgb_map
         sdf = torch.cat(actual_sdf_list, 0)
 
-        return rgb_map, feature_map, [sdf], mask, [xyz, depth, depth_template, mask_template], cat_eikonal_term
+        return rgb_map, feature_map, [sdf], mask, [xyz, depth], cat_eikonal_term

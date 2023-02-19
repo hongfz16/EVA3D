@@ -11,6 +11,18 @@ eva3d_deepfashion_model = dict(file_url='https://drive.google.com/uc?id=1SYPjxnH
                             alt_url='', file_size=160393221, file_md5='d0fae86edf76c52e94223bd3f39b2157',
                             file_path='checkpoint/512x256_deepfashion/volume_renderer/models_0420000.pt',)
 
+eva3d_shhq_model = dict(file_url='https://drive.google.com/uc?id=1mSE9f9N7xTjSvsn9epTaDmFhNNIox2Hd',
+                            alt_url='', file_size=160393221, file_md5='8b1a26134f3a832958addc71642b21ac',
+                            file_path='checkpoint/512x256_shhq/volume_renderer/models_0740000.pt',)
+
+eva3d_aist_model = dict(file_url='https://drive.google.com/uc?id=1jTzQRXVtlHXM1Zj9SBnGl2FZa_-aQFSK',
+                            alt_url='', file_size=158403591, file_md5='2ccccb17b7571e6e96e0861e39f5d847',
+                            file_path='checkpoint/256x256_aist/volume_renderer/models_0340000.pt',)
+
+eva3d_ubcfashion_model = dict(file_url='https://drive.google.com/uc?id=1BCpc5tj8a1DDymYSYpTMo4YDYksUICE0',
+                            alt_url='', file_size=160416931, file_md5='26bdd36d662c5bc28b6a597bceee4f03',
+                            file_path='checkpoint/256x256_aist/volume_renderer/models_0340000.pt',)
+
 smpl_model = dict(file_url='https://drive.google.com/uc?id=15XKYibakFcDgs_wEtLqS5dJYHck0FIv4',
                             alt_url='', file_size=39001280, file_md5='65dc7f162f3ef21a38637663c57e14a7',
                             file_path='smpl_models/smpl/SMPL_NEUTRAL.pkl',)
@@ -24,6 +36,30 @@ def download_pretrained_models():
             print('Google Drive download failed.\n' \
                   'Trying do download from alternate server')
             download_file(session, eva3d_deepfashion_model, use_alt_url=True)
+    print('Downloading EVA3D model pretrained on SHHQ.')
+    with requests.Session() as session:
+        try:
+            download_file(session, eva3d_shhq_model)
+        except:
+            print('Google Drive download failed.\n' \
+                  'Trying do download from alternate server')
+            download_file(session, eva3d_shhq_model, use_alt_url=True)
+    print('Downloading EVA3D model pretrained on UBCFashion.')
+    with requests.Session() as session:
+        try:
+            download_file(session, eva3d_ubcfashion_model)
+        except:
+            print('Google Drive download failed.\n' \
+                  'Trying do download from alternate server')
+            download_file(session, eva3d_ubcfashion_model, use_alt_url=True)
+    print('Downloading EVA3D model pretrained on AIST.')
+    with requests.Session() as session:
+        try:
+            download_file(session, eva3d_aist_model)
+        except:
+            print('Google Drive download failed.\n' \
+                  'Trying do download from alternate server')
+            download_file(session, eva3d_aist_model, use_alt_url=True)
 
 def download_smpl_models():
     print('Downloading SMPL model.')
