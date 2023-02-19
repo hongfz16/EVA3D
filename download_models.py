@@ -21,7 +21,7 @@ eva3d_aist_model = dict(file_url='https://drive.google.com/uc?id=1jTzQRXVtlHXM1Z
 
 eva3d_ubcfashion_model = dict(file_url='https://drive.google.com/uc?id=1BCpc5tj8a1DDymYSYpTMo4YDYksUICE0',
                             alt_url='', file_size=160416931, file_md5='26bdd36d662c5bc28b6a597bceee4f03',
-                            file_path='checkpoint/256x256_aist/volume_renderer/models_0340000.pt',)
+                            file_path='checkpoint/512x256_ubcfashion/volume_renderer/models_0620000.pt',)
 
 smpl_model = dict(file_url='https://drive.google.com/uc?id=15XKYibakFcDgs_wEtLqS5dJYHck0FIv4',
                             alt_url='', file_size=39001280, file_md5='65dc7f162f3ef21a38637663c57e14a7',
