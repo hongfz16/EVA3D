@@ -108,8 +108,20 @@ pip install -r requirements.txt
 
 The pretrain model and SMPL model are needed for inference.
 
+The following script downloads pretrain models.
+
 ```bash
 python download_models.py
+```
+
+Register and download SMPL models [here](https://smpl.is.tue.mpg.de/). Put the downloaded models in the folder smpl_models. Only the neutral one is needed. The folder structure should look like
+
+```
+./
+├── ...
+└── smpl_models/
+    ├── smpl/
+        └── SMPL_NEUTRAL.pkl
 ```
 
 ### Commands

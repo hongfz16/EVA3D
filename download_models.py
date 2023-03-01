@@ -23,10 +23,6 @@ eva3d_ubcfashion_model = dict(file_url='https://drive.google.com/uc?id=1BCpc5tj8
                             alt_url='', file_size=160416931, file_md5='26bdd36d662c5bc28b6a597bceee4f03',
                             file_path='checkpoint/512x256_ubcfashion/volume_renderer/models_0620000.pt',)
 
-smpl_model = dict(file_url='https://drive.google.com/uc?id=15XKYibakFcDgs_wEtLqS5dJYHck0FIv4',
-                            alt_url='', file_size=39001280, file_md5='65dc7f162f3ef21a38637663c57e14a7',
-                            file_path='smpl_models/smpl/SMPL_NEUTRAL.pkl',)
-
 def download_pretrained_models():
     print('Downloading EVA3D model pretrained on DeepFashion.')
     with requests.Session() as session:
@@ -60,16 +56,6 @@ def download_pretrained_models():
             print('Google Drive download failed.\n' \
                   'Trying do download from alternate server')
             download_file(session, eva3d_aist_model, use_alt_url=True)
-
-def download_smpl_models():
-    print('Downloading SMPL model.')
-    with requests.Session() as session:
-        try:
-            download_file(session, smpl_model)
-        except:
-            print('Google Drive download failed.\n' \
-                  'Trying do download from alternate server')
-            download_file(session, smpl_model, use_alt_url=True)
     
 
 def download_file(session, file_spec, use_alt_url=False, chunk_size=128, num_attempts=10):
@@ -136,4 +122,3 @@ def download_file(session, file_spec, use_alt_url=False, chunk_size=128, num_att
 
 if __name__ == "__main__":
     download_pretrained_models()
-    download_smpl_models()
