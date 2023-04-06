@@ -10,7 +10,6 @@ scikit-video==1.1.11
 scipy==1.8.0
 smplx==0.1.28
 trimesh==3.10.7
-sklearn
 lmdb
 ninja
 requests
